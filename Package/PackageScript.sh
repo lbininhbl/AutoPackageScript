@@ -13,7 +13,7 @@ PROJECT_DIR=$(cd "$CURRENT_DIR/.."; pwd)
 export_options_plist_path="$CURRENT_DIR/DevelopmentExportOptionsPlist.plist"
 
 # =============================== 工程信息 ===============================  #
-scheme_name="hunlimao"
+scheme_name="替换成你的scheme"
 # 工程名字
 project_name=`find $PROJECT_DIR -maxdepth 1 -name *.xcodeproj | awk -F "[/.]" '{print $(NF-1)}'`
 # info.plist的路径
@@ -51,12 +51,11 @@ OPTIONS:
     -v  Version string. Specify a version to the project when export a new ipa.
     -u  An option that upload the ipa. Only upload to app store when export option is AppStore, otherwise upload to pgy.
     -e  Export option. Specify it in [ AdHoc AppStore Development ]. Default is Devleopment.
-    -p  An option that pack the RN part. For shortening script time, default is false. Because this part is not modified frequently. 
+
     -h  打印这份说明文档
     -v  版本号，指定一个新包的版本号
     -u  上传至ipa的选项. 只有当export option是AppStore的时候会上传至AppStore，否则上传至蒲公英.
     -e  打包的方式，可以从[ AdHoc AppStore Development ]中指定任一种，默认是Development
-    -p  打包RN的选项. 为了节省时间，默认为false. 因为这部分的代码不会很经常地改动.
 EOF
 }
 
@@ -101,9 +100,6 @@ while getopts e:v:uhp OPT; do
 				build_configuration="Release"
 			fi
 			;;
-		p) 
-			pack_react_native=true
-			;;
 		h)
 			useage	
 			exit 1
@@ -120,22 +116,6 @@ echo "***************** 设置版本号: ${bundle_version} build号: ${build_num
 # 设置版本号，build号
 /usr/libexec/PlistBuddy -c "set :CFBundleShortVersionString ${bundle_version}" $info_plist_path
 /usr/libexec/PlistBuddy -c "set :CFBundleVersion ${build_number}" $info_plist_path
-
-# ==================================== React Native 部分 ========================================= #
-if $pack_react_native ; then
-	echo "***************** 打包React *****************"
-	#进入react根目录
-	cd "$PROJECT_DIR/../XiTao-Time-React"
-	mkdir -p ./ios/bundle/
-	react-native bundle --entry-file index.ios.js \
-   		--bundle-output ./ios/bundle/index.ios.jsbundle \
-   		--platform ios \
-   		--assets-dest ./ios/bundle \
-   		--dev false
-	#返回根目录
-	cd "$PROJECT_DIR"
-	echo "***************** React打包完成 *****************"
-fi
 
 # =============================== 设置路径信息 ===============================
 export_path="${base_export_path}${export_folder}${scheme_name} v${bundle_version} $(date '+%Y-%m-%d %H-%M-%S')"
@@ -237,7 +217,7 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 	
 	uploadxmlPath="${CURRENT_DIR}/uploadxml"
 	/Applications/Xcode.app/Contents/Applications/Application\ Loader.app/Contents/Frameworks/ITunesSoftwareService.framework/Versions/A/Support/altool \
-	--upload-app -f "${filePath}" -t "ios" -u "zhangerbing@hunlimao.com" -p "Ml4909051" --output-format xml > $uploadxmlPath
+	--upload-app -f "${filePath}" -t "ios" -u "替换成你的apple id" -p "替换成你的apple id密码" --output-format xml > $uploadxmlPath
 
 	product_errors=`/usr/libexec/PlistBuddy -c "Print :product-errors" $uploadxmlPath`
 	if [[ -n ${product_errors} ]]; then
@@ -252,9 +232,9 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 elif $upload_ipa; then
 	echo "*************************  开始上传ipa至蒲公英  *************************"
 	
-	pgyer_user_key="eb2ecd900e7f8838d5cf27aeafea0e9a"
-	pgyer_api_key="f41dd8696cf4862b2fe3520737c56f59"
-	pgyer_download_url="https://www.pgyer.com/Hunlimao"
+	pgyer_user_key="替换成你的蒲公英userkey"
+	pgyer_api_key="替换成你的蒲公英apikey"
+	pgyer_download_url="替换成你的下载地址"
 	filePath="${export_path}/${scheme_name}.ipa"
 
 	RESULT=$(curl -F "file=@$filePath" -F "uKey=$pgyer_user_key" -F "_api_key=$pgyer_api_key" -F "publishRange=2" http://www.pgyer.com/apiv1/app/upload)
