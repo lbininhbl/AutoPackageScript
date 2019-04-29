@@ -18,8 +18,9 @@ scheme_name="替换成你的scheme"
 project_name=`find $PROJECT_DIR -maxdepth 1 -name *.xcodeproj | awk -F "[/.]" '{print $(NF-1)}'`
 # info.plist的路径
 info_plist_path="$PROJECT_DIR/$project_name/Info.plist"
-# build号，规则为年月日
-build_number=$(date '+%Y%m%d')
+# build号, 默认工程中的，也可以注释以下语句，使用年月日的规则
+# build_number=$(date '+%Y%m%d')
+build_number=`/usr/libexec/PlistBuddy -c "Print CFBundleVersion" $info_plist_path`
 # 获取工程的版本号
 bundle_version=`/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" $info_plist_path`
 
@@ -49,11 +50,13 @@ Usage: $0 <OPTIONS>
 OPTIONS:
     -h  Print this usage.
     -v  Version string. Specify a version to the project when export a new ipa.
+    -b  Build number string. Specify a build number to project when export a new ipa.
     -u  An option that upload the ipa. Only upload to app store when export option is AppStore, otherwise upload to pgy.
     -e  Export option. Specify it in [ AdHoc AppStore Development ]. Default is Devleopment.
 
     -h  打印这份说明文档
     -v  版本号，指定一个新包的版本号
+    -b  build号，指定一个包的build号，默认为工程本身
     -u  上传至ipa的选项. 只有当export option是AppStore的时候会上传至AppStore，否则上传至蒲公英.
     -e  打包的方式，可以从[ AdHoc AppStore Development ]中指定任一种，默认是Development
 EOF
@@ -83,10 +86,13 @@ function formatCostTime() {
 
 
 # =============================== 处理脚本的参数 ===============================  #
-while getopts e:v:uhp OPT; do
+while getopts e:v:b:uhp OPT; do
 	case $OPT in
 		v)
 			bundle_version=$OPTARG
+			;;
+		b)
+			build_number=$OPTARG
 			;;
 		u)
 			echo "需要上传ipa"
