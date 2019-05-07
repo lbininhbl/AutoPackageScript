@@ -206,7 +206,7 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 	validatexmlPath="${CURRENT_DIR}/validatexml"
 	# altool路径
 	/Applications/Xcode.app/Contents/Applications/Application\ Loader.app/Contents/Frameworks/ITunesSoftwareService.framework/Versions/A/Support/altool \
-	--validate-app -f "${filePath}" -t "ios" -u "zhangerbing@hunlimao.com" -p "Ml4909051" --output-format xml > $validatexmlPath
+	--validate-app -f "${filePath}" -t "ios" -u "替换成你的apple id" -p "替换成你的apple id密码" --output-format xml > $validatexmlPath
 	
 	product_errors=`/usr/libexec/PlistBuddy -c "Print :product-errors" $validatexmlPath`
 	if [[ -n ${product_errors} ]]; then
