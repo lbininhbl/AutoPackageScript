@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!--
-   a.plist
-   GitDemo
-
-   Created by zhangerbing on 2019/3/8.
-   Copyright (c) 2019 comcom.zhuoyue. All rights reserved.
--->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-    <dict>
-        <key>method</key>
-        <string>ad-hoc</string>
-        <key>compileBitcode</key>
-        <false/>
-    </dict>
+<dict>
+	<key>method</key>
+	<string>ad-hoc</string>
+	<key>compileBitcode</key>
+	<true/>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>bundle id</key>
+		<string>对应的pp文件名称</string>
+	</dict>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>stripSwiftSymbols</key>
+	<true/>
+	<key>teamID</key>
+	<string>设置你的证书的TeamID</string>
+	<key>thinning</key>
+	<string>&lt;none&gt;</string>
+</dict>
 </plist>

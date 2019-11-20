@@ -4,5 +4,22 @@
 <dict>
 	<key>method</key>
 	<string>enterprise</string>
+	<key>compileBitcode</key>
+	<false/>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>bundle id</key>
+		<string>对应的pp文件名称</string>
+	</dict>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>stripSwiftSymbols</key>
+	<true/>
+	<key>teamID</key>
+	<string>设置你的证书的TeamID</string>
+	<key>thinning</key>
+	<string>&lt;none&gt;</string>
 </dict>
 </plist>

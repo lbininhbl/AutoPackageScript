@@ -13,16 +13,19 @@ PROJECT_DIR=$(cd "$CURRENT_DIR/.."; pwd)
 export_options_plist_path="$CURRENT_DIR/DevelopmentExportOptionsPlist.plist"
 
 # =============================== 工程信息 ===============================  #
-scheme_name="替换成你的scheme"
 # 工程名字
 project_name=`find $PROJECT_DIR -maxdepth 1 -name *.xcodeproj | awk -F "[/.]" '{print $(NF-1)}'`
+# scheme_name，默认为工程名字，如果不一致，则需要手动设置
+scheme_name=$project_name
 # info.plist的路径
 info_plist_path="$PROJECT_DIR/$project_name/Info.plist"
 # build号, 默认工程中的，也可以注释以下语句，使用年月日的规则
 # build_number=$(date '+%Y%m%d')
-build_number=`/usr/libexec/PlistBuddy -c "Print CFBundleVersion" $info_plist_path`
-# 获取工程的版本号
-bundle_version=`/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" $info_plist_path`
+#build_number=`/usr/libexec/PlistBuddy -c "Print CFBundleVersion" $info_plist_path`
+build_number=`sed -n '/CURRENT_PROJECT_VERSION/{s/CURRENT_PROJECT_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ${PROJECT_DIR}/${project_name}.xcodeproj/project.pbxproj`
+# 获取工程的版本号, Xcode11之后，直接读取info.plist文件里只得到 $MARKETING_VERSION 和 $CURRENT_PROJECT_VERSION，所以修改了获取方法
+#bundle_version=`/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" $info_plist_path`
+bundle_version=`sed -n '/MARKETING_VERSION/{s/MARKETING_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ${PROJECT_DIR}/${project_name}.xcodeproj/project.pbxproj`
 
 # =============================== 打包部分 ===============================  #
 # 指定要打包编译的方式 : Release,Debug...
@@ -40,6 +43,10 @@ upload_ipa=false
 pack_react_native=false
 # 是否是workspace
 is_workspace=true
+# 是否需要修改 version
+is_set_version=false
+# 是否需要修改 build
+is_set_build=false
 
 # =============================== 全局函数 ===============================  #
 ## useage 脚本用法
@@ -89,9 +96,11 @@ function formatCostTime() {
 while getopts e:v:b:uhp OPT; do
 	case $OPT in
 		v)
+            is_set_version=true
 			bundle_version=$OPTARG
 			;;
 		b)
+            is_set_build=true
 			build_number=$OPTARG
 			;;
 		u)
@@ -118,17 +127,22 @@ while getopts e:v:b:uhp OPT; do
 done
 
 # =============================== 设置工程信息 ===============================  #
-echo "***************** 设置版本号: ${bundle_version} build号: ${build_number} *****************"
+echo "***************** 版本号: ${bundle_version} build号: ${build_number} *****************"
 # 设置版本号，build号
-/usr/libexec/PlistBuddy -c "set :CFBundleShortVersionString ${bundle_version}" $info_plist_path
-/usr/libexec/PlistBuddy -c "set :CFBundleVersion ${build_number}" $info_plist_path
+if $is_set_version ; then
+    /usr/libexec/PlistBuddy -c "set :CFBundleShortVersionString ${bundle_version}" $info_plist_path
+fi
+
+if $is_set_build ; then
+    /usr/libexec/PlistBuddy -c "set :CFBundleVersion ${build_number}" $info_plist_path
+fi
 
 # =============================== 设置路径信息 ===============================
 export_path="${base_export_path}${export_folder}${scheme_name} v${bundle_version} $(date '+%Y-%m-%d %H-%M-%S')"
 # 指定输出归档文件地址
 date=$(date '+%Y-%m-%d')
 time=$(date '+%H-%M-%S')
-export_archive_path="/Users/hunlimao/Library/Developer/Xcode/Archives/$date/${scheme_name}${time}.xcarchive"
+export_archive_path="/Users/${user}/Library/Developer/Xcode/Archives/$date/${scheme_name}${time}.xcarchive"
 
 # =============================== 开始构建项目 ===============================  #
 echo "***************** 开始构建项目 *****************"
@@ -237,13 +251,13 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 
 elif $upload_ipa; then
 	echo "*************************  开始上传ipa至蒲公英  *************************"
-	
-	pgyer_user_key="替换成你的蒲公英userkey"
+	# 蒲公英api https://www.pgyer.com/doc/view/api#uploadApp
 	pgyer_api_key="替换成你的蒲公英apikey"
 	pgyer_download_url="替换成你的下载地址"
 	filePath="${export_path}/${scheme_name}.ipa"
-
-	RESULT=$(curl -F "file=@$filePath" -F "uKey=$pgyer_user_key" -F "_api_key=$pgyer_api_key" -F "publishRange=2" http://www.pgyer.com/apiv1/app/upload)
+    
+    # 最后api前要多一个空格，不然会一直卡着不结束。。。。
+	RESULT=$(curl -F "file=@$filePath" -F "_api_key=$pgyer_api_key" -F "buildInstallType=2" -F "buildPassword=1" https://www.pgyer.com/apiv2/app/upload)
 	echo $RESULT
 	echo "*************************  上传完成  *************************"
 	echo "*************************  下载网址： ${pgyer_download_url}  *************************"
