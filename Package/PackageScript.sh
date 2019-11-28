@@ -209,7 +209,7 @@ fi
 end_time=$(date +%s)
 SECONDS=`expr $end_time - $start_time`
 formatCostTime $SECONDS
-echo "使用HLMAutoPackageScript打包总用时: ${totalCost}"
+echo "使用AutoPackageScript打包总用时: ${totalCost}"
 
 #ipa上传
 if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
