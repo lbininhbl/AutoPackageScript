@@ -218,9 +218,11 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 	
 	filePath="${export_path}/${scheme_name}.ipa"
 	validatexmlPath="${CURRENT_DIR}/validatexml"
-	# altool路径
-	/Applications/Xcode.app/Contents/Applications/Application\ Loader.app/Contents/Frameworks/ITunesSoftwareService.framework/Versions/A/Support/altool \
-	--validate-app -f "${filePath}" -t "ios" -u "替换成你的apple id" -p "替换成你的apple id密码" --output-format xml > $validatexmlPath
+	
+	# xcode 11已经移除了 Application Loader了，所以这里改用xcrun命令，可以在命令台中查看使用方法。
+    # 如果apple id开启了二次验证的话，则需要把密码改成指定密码，在https://appleid.apple.com/#!&page=signin登录并生成。
+    # 或者使用api密钥的方式，详情参考：https://juejin.im/post/5dbbc051f265da4cf406f809
+    xcrun altool --validate-app -f "${filePath}" -t ios -u "替换成你的apple id" -p "替换成你的apple id密码或者是特定密码" --output-format xml > $validatexmlPath
 	
 	product_errors=`/usr/libexec/PlistBuddy -c "Print :product-errors" $validatexmlPath`
 	if [[ -n ${product_errors} ]]; then
@@ -236,8 +238,8 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 	echo "*************************  开始上传ipa包  *************************"
 	
 	uploadxmlPath="${CURRENT_DIR}/uploadxml"
-	/Applications/Xcode.app/Contents/Applications/Application\ Loader.app/Contents/Frameworks/ITunesSoftwareService.framework/Versions/A/Support/altool \
-	--upload-app -f "${filePath}" -t "ios" -u "替换成你的apple id" -p "替换成你的apple id密码" --output-format xml > $uploadxmlPath
+	
+	xcrun altool --upload-app -f "${filePath}" -t ios -u "替换成你的apple id" -p "替换成你的apple id密码或者是特定密码" --output-format xml > $validatexmlPath
 
 	product_errors=`/usr/libexec/PlistBuddy -c "Print :product-errors" $uploadxmlPath`
 	if [[ -n ${product_errors} ]]; then
