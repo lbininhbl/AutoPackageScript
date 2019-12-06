@@ -239,7 +239,7 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 	
 	uploadxmlPath="${CURRENT_DIR}/uploadxml"
 	
-	xcrun altool --upload-app -f "${filePath}" -t ios -u "替换成你的apple id" -p "替换成你的apple id密码或者是特定密码" --output-format xml > $validatexmlPath
+	xcrun altool --upload-app -f "${filePath}" -t ios -u "替换成你的apple id" -p "替换成你的apple id密码或者是特定密码" --output-format xml > $uploadxmlPath
 
 	product_errors=`/usr/libexec/PlistBuddy -c "Print :product-errors" $uploadxmlPath`
 	if [[ -n ${product_errors} ]]; then
