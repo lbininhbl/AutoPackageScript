@@ -63,9 +63,18 @@ OPTIONS:
 
     -h  打印这份说明文档
     -v  版本号，指定一个新包的版本号
-    -b  build号，指定一个包的build号，默认为工程本身
+    -b  build号，指定一个包的build号
     -u  上传至ipa的选项. 只有当export option是AppStore的时候会上传至AppStore，否则上传至蒲公英.
     -e  打包的方式，可以从[ AdHoc AppStore Development ]中指定任一种，默认是Development
+    
+    Example（例子）:
+    
+    -------------指定版本号，build号，不填则默认为工程里的值-------------
+    $ ./PackageScript.sh -v "1.0" -b "1.0" -e "AppStore" -u
+    -------------不需要上传的Debug的developer包-------------
+    $ ./PackageScript.sh
+    -------------上传蒲公英的Adhoc包-------------
+    $ ./PackageScript.sh -e AdHoc -u
 EOF
 }
 
@@ -127,7 +136,7 @@ while getopts e:v:b:uhp OPT; do
 done
 
 # =============================== 设置工程信息 ===============================  #
-echo "***************** 版本号: ${bundle_version} build号: ${build_number} *****************"
+echo "***************** 版本号: ${bundle_version} build号: ${build_number} export:${export_option} build_configuration: ${build_configuration} *****************"
 # 设置版本号，build号
 if $is_set_version ; then
     /usr/libexec/PlistBuddy -c "set :CFBundleShortVersionString ${bundle_version}" $info_plist_path
