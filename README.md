@@ -1,5 +1,5 @@
 # AutoPackageScript
-An shell script that auto pack iOS ipa file.
+A shell script that auto pack iOS ipa file.
 
 ## 用法
 
