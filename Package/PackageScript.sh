@@ -52,7 +52,7 @@ is_set_build=false
 ## useage 脚本用法
 function useage() {
 	cat << EOF
-Hunlimao-iOS app build scipt
+iOS app build scipt
 Usage: $0 <OPTIONS>
 OPTIONS:
     -h  Print this usage.
