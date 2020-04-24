@@ -258,6 +258,9 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 	else
 		echo "上传ipa包成功 🎉  🎉  🎉"
 		osascript -e 'display notification "上传ipa包成功  🎉  🎉  🎉" with title "打包成功"'
+  
+        rm -f "$uploadxmlPath"
+        rm -f "$validatexmlPath"
 	fi
 
 elif $upload_ipa; then
