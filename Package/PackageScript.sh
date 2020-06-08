@@ -100,6 +100,42 @@ function formatCostTime() {
 	fi
 }
 
+# 上传到蒲公英
+function upload_pgy() {
+    echo "*************************  开始上传ipa至蒲公英  *************************"
+    # 蒲公英api https://www.pgyer.com/doc/view/api#uploadApp
+    pgyer_api_key="替换成你的蒲公英apikey"
+    pgyer_download_host="替换成你的下载地址"
+    filePath="${export_path}/${ipa_name}"
+
+    forword=1
+    while forword==1;
+    do
+    
+    # 最后api前要多一个空格，不然会一直卡着不结束。。。。
+    RESULT=$(curl -F "file=@$filePath" -F "_api_key=$pgyer_api_key" -F "buildInstallType=2" -F "buildPassword=1"  https://www.pgyer.com/apiv2/app/upload)
+    result=`echo "${RESULT}" | grep -Eo "\"code\":[0-9]+" | awk -F "[:]" '{print $(NF)}'`
+    
+    if [[ "${result}" == "0" ]]
+    then
+        buildShortcutUrl=`echo ${RESULT} | grep -Eo "\"buildShortcutUrl\":\"[a-zA-Z]+\"" | awk -F "[:]" '{print $(NF)}' | sed 's/\"//g'`
+        echo "*************************  上传完成  *************************"
+        echo "*************************  下载网址： ${pgyer_download_host}/${buildShortcutUrl}  *************************"
+        osascript -e 'display notification "已上传至蒲公英" with title "打包成功"'
+        break
+    else
+        echo $RESULT
+        read -n1 -p "上传失败，是否重新上传?(按n不上传，任意键继续) " retry
+
+        case $retry in
+        (N | n)
+            forword=0
+            echo "不上传";;
+        esac
+
+    fi
+    done
+}
 
 # =============================== 处理脚本的参数 ===============================  #
 while getopts e:v:b:uhp OPT; do
@@ -206,12 +242,15 @@ xcodebuild  -exportArchive \
             -jobs 4
 
 # 检查文件是否存在
-if [ -f "$export_path/${scheme_name}.ipa" ] ; then
-	echo "导出 ${ipa_name}.ipa 包成功 🎉  🎉  🎉 "
-	open "$export_path"
+# 由于ipa的包名字可以在xcode的Archive配置里改动，所以这里成功直接判断文件夹
+ipa_name=""
+if [ -d "$export_path" ] ; then
+    ipa_name=$(cd "${export_path}"; find *.ipa)
+    echo "导出 ${ipa_name} 包成功 🎉  🎉  🎉 "
+    open "$export_path"
 else
-	echo "导出 ${ipa_name}.ipa 包失败 😢 😢 😢 "
-	exit 1
+    echo "导出 ${ipa_name} 包失败 😢 😢 😢 "
+    exit 1
 fi
 
 # 输出打包总用时
@@ -225,7 +264,7 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 	# 当输出的包是AppStore的包且选择了上传
 	echo "*************************  开始验证ipa  *************************"
 	
-	filePath="${export_path}/${scheme_name}.ipa"
+	filePath="${export_path}/${ipa_name}.ipa"
 	validatexmlPath="${CURRENT_DIR}/validatexml"
 	
 	# xcode 11已经移除了 Application Loader了，所以这里改用xcrun命令，可以在命令台中查看使用方法。
@@ -264,19 +303,7 @@ if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
 	fi
 
 elif $upload_ipa; then
-	echo "*************************  开始上传ipa至蒲公英  *************************"
-	# 蒲公英api https://www.pgyer.com/doc/view/api#uploadApp
-	pgyer_api_key="替换成你的蒲公英apikey"
-	pgyer_download_url="替换成你的下载地址"
-	filePath="${export_path}/${scheme_name}.ipa"
-    
-    # 最后api前要多一个空格，不然会一直卡着不结束。。。。
-	RESULT=$(curl -F "file=@$filePath" -F "_api_key=$pgyer_api_key" -F "buildInstallType=2" -F "buildPassword=1" https://www.pgyer.com/apiv2/app/upload)
-	echo $RESULT
-	echo "*************************  上传完成  *************************"
-	echo "*************************  下载网址： ${pgyer_download_url}  *************************"
-
-	osascript -e 'display notification "已上传至蒲公英" with title "打包成功"'
+	upload_pgy
 else	
 	# 通过命令行调用通知栏信息
 	osascript -e 'display notification "已完成打包" with title "打包成功"'
