@@ -100,43 +100,6 @@ function formatCostTime() {
 	fi
 }
 
-# 上传到蒲公英
-function upload_pgy() {
-    echo "*************************  开始上传ipa至蒲公英  *************************"
-    # 蒲公英api https://www.pgyer.com/doc/view/api#uploadApp
-    pgyer_api_key="替换成你的蒲公英apikey"
-    pgyer_download_host="替换成你的下载地址"
-    filePath="${export_path}/${ipa_name}"
-
-    forword=1
-    while forword==1;
-    do
-    
-    # 最后api前要多一个空格，不然会一直卡着不结束。。。。
-    RESULT=$(curl -F "file=@$filePath" -F "_api_key=$pgyer_api_key" -F "buildInstallType=2" -F "buildPassword=1"  https://www.pgyer.com/apiv2/app/upload)
-    result=`echo "${RESULT}" | grep -Eo "\"code\":[0-9]+" | awk -F "[:]" '{print $(NF)}'`
-    
-    if [[ "${result}" == "0" ]]
-    then
-        buildShortcutUrl=`echo ${RESULT} | grep -Eo "\"buildShortcutUrl\":\"[a-zA-Z]+\"" | awk -F "[:]" '{print $(NF)}' | sed 's/\"//g'`
-        echo "*************************  上传完成  *************************"
-        echo "*************************  下载网址： ${pgyer_download_host}/${buildShortcutUrl}  *************************"
-        osascript -e 'display notification "已上传至蒲公英" with title "打包成功"'
-        break
-    else
-        echo $RESULT
-        read -n1 -p "上传失败，是否重新上传?(按n不上传，任意键继续) " retry
-
-        case $retry in
-        (N | n)
-            forword=0
-            echo "不上传";;
-        esac
-
-    fi
-    done
-}
-
 # =============================== 处理脚本的参数 ===============================  #
 while getopts e:v:b:uhp OPT; do
 	case $OPT in
@@ -259,48 +222,50 @@ SECONDS=`expr $end_time - $start_time`
 formatCostTime $SECONDS
 echo "使用AutoPackageScript打包总用时: ${totalCost}"
 
+# =============================== 上传ipa相关的函数 ===============================  #
+# 上传到蒲公英
+function upload_pgy() {
+    echo "*************************  开始上传ipa至蒲公英  *************************"
+    # 蒲公英api https://www.pgyer.com/doc/view/api#uploadApp
+    pgyer_api_key="替换成你的蒲公英apikey"
+    pgyer_download_host="替换成你的下载地址"
+    filePath="${export_path}/${ipa_name}"
+
+    forword=1
+    while forword==1;
+    do
+    
+    # 最后api前要多一个空格，不然会一直卡着不结束。。。。
+    RESULT=$(curl -F "file=@$filePath" -F "_api_key=$pgyer_api_key" -F "buildInstallType=2" -F "buildPassword=1"  https://www.pgyer.com/apiv2/app/upload)
+    result=`echo "${RESULT}" | grep -Eo "\"code\":[0-9]+" | awk -F "[:]" '{print $(NF)}'`
+    
+    if [[ "${result}" == "0" ]]
+    then
+        buildShortcutUrl=`echo ${RESULT} | grep -Eo "\"buildShortcutUrl\":\"[a-zA-Z]+\"" | awk -F "[:]" '{print $(NF)}' | sed 's/\"//g'`
+        echo "*************************  上传完成  *************************"
+        echo "*************************  下载网址： ${pgyer_download_host}/${buildShortcutUrl}  *************************"
+        osascript -e 'display notification "已上传至蒲公英" with title "打包成功"'
+        break
+    else
+        echo $RESULT
+        read -n1 -p "上传失败，是否重新上传?(按n不上传，任意键继续) " retry
+
+        case $retry in
+        (N | n)
+            forword=0
+            echo "不上传";;
+        esac
+
+    fi
+    done
+}
+
 #ipa上传
 if [[ $upload_ipa == "true" && $export_option == "AppStore" ]] ; then
-	# 当输出的包是AppStore的包且选择了上传
-	echo "*************************  开始验证ipa  *************************"
-	
-	filePath="${export_path}/${ipa_name}.ipa"
-	validatexmlPath="${CURRENT_DIR}/validatexml"
-	
-	# xcode 11已经移除了 Application Loader了，所以这里改用xcrun命令，可以在命令台中查看使用方法。
-    # 如果apple id开启了二次验证的话，则需要把密码改成指定密码，在https://appleid.apple.com/#!&page=signin登录并生成。
-    # 或者使用api密钥的方式，详情参考：https://juejin.im/post/5dbbc051f265da4cf406f809
-    xcrun altool --validate-app -f "${filePath}" -t ios -u "替换成你的apple id" -p "替换成你的apple id密码或者是特定密码" --output-format xml > $validatexmlPath
-	
-	product_errors=`/usr/libexec/PlistBuddy -c "Print :product-errors" $validatexmlPath`
-	if [[ -n ${product_errors} ]]; then
-		echo "验证ipa包失败 😢 😢 😢"
-		echo `/usr/libexec/PlistBuddy -c "Print :product-errors:0:message" $validatexmlPath`
-		exit 1
-	fi
-
-	echo "验证ipa包成功  🎉  🎉  🎉"
-
-	rm -rf ~/.itmstransporter/ ~/.old_itmstransporter/
-
-	echo "*************************  开始上传ipa包  *************************"
-	
-	uploadxmlPath="${CURRENT_DIR}/uploadxml"
-	
-	xcrun altool --upload-app -f "${filePath}" -t ios -u "替换成你的apple id" -p "替换成你的apple id密码或者是特定密码" --output-format xml > $uploadxmlPath
-
-	product_errors=`/usr/libexec/PlistBuddy -c "Print :product-errors" $uploadxmlPath`
-	if [[ -n ${product_errors} ]]; then
-		echo "上传ipa包失败 😢 😢 😢"
-		echo `/usr/libexec/PlistBuddy -c "Print :product-errors:0:message" $uploadxmlPath`
-		osascript -e 'display notification "上传ipa包失败 😢 😢 😢" with title "上传ipa包失败"'
-	else
-		echo "上传ipa包成功 🎉  🎉  🎉"
-		osascript -e 'display notification "上传ipa包成功  🎉  🎉  🎉" with title "打包成功"'
-  
-        rm -f "$uploadxmlPath"
-        rm -f "$validatexmlPath"
-	fi
+    # 当输出的包是AppStore的包且选择了上传
+    filePath="${export_path}/${ipa_name}"
+    
+    source $CURRENT_DIR/UploadIAP.sh "$filePath"
 
 elif $upload_ipa; then
 	upload_pgy
